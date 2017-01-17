@@ -110,6 +110,34 @@ const todoApp = (state = {}, action) => {
 }
 ```
 
+### Example 5 - Normalizing state shape
+
+```javascript
+const todosById = (state = {}, action) => {
+    switch (action.type) {
+        case 'ADD_TODO':
+        case 'TOGGLE_TODO':
+            return {
+                ...state,
+                [action.id]: todo(state[action.id], action)
+            };
+        default:
+            return state;
+    }
+};
+
+const todosAllIds = (state = [], action) => {
+    switch (action.type) {
+        case 'ADD_TODO':
+            return [...state, action.id];
+        default:
+            return state;
+    }
+};
+
+const todos = combineReducers({ todosById, todosAllIds });
+```
+
 ### Combine reducers
 
 #### Simplified implementation
@@ -200,6 +228,91 @@ document.addEventListener('mouseup', () => {
 });
 ```
 
+### Example 2 - Initial state
+
+***Obs*** *Dan Abramov does not recommend*
+
+```javascript
+const persistedState = {
+    todos: [{
+        id: '0',
+        text: 'Welcome back!',
+        completed: true
+    }]
+};
+const store = createStore(reducers, persistedState);
+```
+
+### Example 3 - redux-logger implementation
+
+```javascript
+const addLoggingToDispatch = (store) => {
+    const next = store.dispatch;
+    if (!console.group) {
+        return next;
+    }
+
+    return (action) => {
+        console.group(action.type);
+        console.log('%c prev state', 'color: gray', store.getState());
+        console.log('%c action', 'color: blue', action);
+        const returnValue = next(action);
+        console.log('%c next state', 'color: green', store.getState());
+        console.groupEnd(action.type);
+
+        return returnValue;
+    }
+}
+
+const store = createStore(reducers);
+if (process.env.NODE_ENV !== 'production') {
+    store.dispatch = addLoggingToDispatch(store);
+}
+```
+
+## Middleware
+
+### Simple implementation
+
+```javascript
+const applyMiddlware = (store, middlewares) => {
+    middlewares.slice().reverse().forEach(middleware =>
+        store.dispatch = middleware(store)(store.dispatch);
+    );
+};
+```
+
+### Example
+
+```javascript
+const store = createStore(reducers, applyMiddlware(middleware1, middlware2));
+```
+
+## Thunk - redux-promise
+
+### Simple implementation
+
+```javascript
+const thunk = (store) => (next) => (action) => {
+    if (typeof action.then === 'function') {
+        return action.then(next);
+    }
+    return next(action);
+};
+
+const store = createStore(reducers, [thunk]);
+```
+
+
+### Example
+
+```javascript
+const store = createStore(reducers, [thunk]);
+
+// Action creators
+// TODO: Revisar Thunk e Middlewares
+// Paramos em https://egghead.io/lessons/javascript-redux-updating-the-state-with-the-fetched-data?series=building-react-applications-with-idiomatic-redux
+```
 
 ## Avoiding array mutation
 
@@ -248,6 +361,10 @@ const addTodo = (text) => ({
 
 store.dispatch(addTodo("Novo todo"));
 ```
+
+
+
+
 
 ## React integration
 
