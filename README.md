@@ -233,6 +233,212 @@ const toggleTodo = (todo) => {
 }
 ```
 
+## Action creators
+
+### Example
+
+```javascript
+let nextTodoId = 0;
+
+const addTodo = (text) => ({
+    type: 'ADD_TODO',
+    id: nextTodoId++,
+    text
+});
+
+store.dispatch(addTodo("Novo todo"));
+```
+
 ## React integration
 
-Currently watching: https://egghead.io/lessons/javascript-redux-extracting-container-components-filterlink?series=getting-started-with-redux
+### Subscribe and Unsubscribe
+
+```javascript
+componentDidMount() {
+    const { store } = this.props;
+    this.unsubscribe = store.subscribe(() => {
+        this.forceUpdate();
+    });
+}
+
+componentWillUnmount() {
+    this.unsubscribe();
+}
+```
+
+### Store provider
+
+***Obs*** *I don't recomend doing this. I prefer to pass the store via props to every single component. Explicit is better than implicit.*
+
+#### Simple implementation
+
+```javascript
+class Provider extends Component {
+    getChildContext() {
+        return {
+            store: this.props.store
+        };
+    }
+
+    render() {
+        return this.props.children;
+    }
+}
+Provider.childContextTypes = {
+    store: React.PropTypes.object
+};
+```
+
+#### Example
+
+```javascript
+import { Provider } from 'react-redux';
+
+ReactDOM.render(
+    <Provider store={createStore(todoApp)}>
+        <TodoApp />
+    </Provider>,
+    document.getElementById('root')
+);
+
+class VisibleTodoList extends Component {
+    componentDidMount() {
+        const { store } = this.context;
+        this.unsubscribe = store.subscribe(() => {
+            this.forceUpdate();
+        });
+    }
+
+    componentWillUnmount() {
+        this.unsubscribe();
+    }
+
+    render() {
+        const props = this.props;
+        const { store } = this.context
+        const state = store.getState();
+
+        return (
+            <TodoList
+                todos={getVisibleTodos(state.todos, state.visibilityFilter)}
+                onTodoClick={id => store.dispatch({
+                    type: 'TOGGLE_TODO',
+                    id
+                })}
+            />
+        )
+    }
+}
+VisibleTodoList.contextTypes = {
+    store: React.PropTypes.object
+};
+
+const AddTodo = (props, { store }) => {
+    let input;
+
+    return (
+        <div>
+            <input ref={node => { input = node }} />
+            <button onClick={() => {
+                store.dispatch({
+                    type: 'ADD_TODO',
+                    id: nextTodoId++,
+                    text: input.value
+                })
+                input.value = '';
+            }}>
+                Add Todo
+            </button>
+        </div>
+    );
+};
+AddTodo.contextTypes = {
+    store: React.PropTypes.object
+};
+```
+
+### Using react-redux connect
+
+#### Example 1 - ChildOne converted to react-redux connect
+
+```javascript
+import { connect } from 'react-redux';
+
+const mapStateToProps = (state) => {
+    return {
+        todos: getVisibleTodos( state.todos, state.visibilityFilter )
+    };
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onTodoClick: (id) => dispatch({ type: 'TOGGLE_TODO', id })
+    };
+}
+
+const ChildOne = connect( mapStateToProps, mapDispatchToProps )(TodoList);
+```
+
+#### Example 2 - Generating containers
+
+```javascript
+let AddTodo = ({ dispatch }) => {
+    let input;
+
+    return (
+        <div>
+            <input ref={node => { input = node }} />
+            <button onClick={() => {
+                dispatch({
+                    type: 'ADD_TODO',
+                    id: nextTodoId++,
+                    text: input.value
+                })
+                input.value = '';
+            }}>
+                Add Todo
+            </button>
+        </div>
+    );
+};
+
+// This won't be used since no states are needed
+// So it will be passed null to connect and therefore
+// avoid subscription to the store
+const mapStateToProps = (state) => {
+    return {};
+};
+
+// This is the default function if we don't specify any parameter for
+// mapDispatchToProps
+const mapDispatchToProps = (dispatch) => {
+    return { dispatch };
+}
+
+// connect(mapStateToProps, mapDispatchToProps) is almost the same thing
+// although if mapStateToProps is a falsy value it prevents the component to
+// subscribe to the store.
+// Same as AddTodo = connect(null, mapDispatchToProps);
+AddTodo = connect()(AddTodo);
+```
+
+#### Example 3 - Receiving props as second argument
+
+```javascript
+const mapStateToProps = (state, ownProps) => {
+    return {
+        active: ownProps.filter === state.visibilityFilter
+    }
+};
+
+const mapDispatchToProps = (dispatch, ownProps) => {
+    onClick: () => {
+        dispatch({
+            type: 'SET_VISIBILITY_FILTER',
+            filter: ownProps.filter
+        });
+    }
+};
+
+const FilterLink = connect(mapStateToProps, mapDispatchToProps)(Link);
+```
