@@ -232,3 +232,7 @@ const toggleTodo = (todo) => {
     return { ...todo, completed: !todo.completed };
 }
 ```
+
+## React integration
+
+Currently watching: https://egghead.io/lessons/javascript-redux-extracting-container-components-filterlink?series=getting-started-with-redux
