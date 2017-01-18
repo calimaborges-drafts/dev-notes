@@ -138,6 +138,25 @@ const todosAllIds = (state = [], action) => {
 const todos = combineReducers({ todosById, todosAllIds });
 ```
 
+### Example 6 - Loading state
+
+```javascript
+const isFetching = (state = false, action) => {
+    if (action.filter !== filter) {
+        return state;
+    }
+
+    switch(action.type) {
+        case 'REQUEST_TODOS':
+            return true;
+        case 'RECEIVE_TODOS':
+            return false;
+        default:
+            return state;
+    }
+};
+```
+
 ### Combine reducers
 
 #### Simplified implementation
@@ -288,30 +307,180 @@ const applyMiddlware = (store, middlewares) => {
 const store = createStore(reducers, applyMiddlware(middleware1, middlware2));
 ```
 
-## Thunk - redux-promise
+## Promise as action (redux-promise)
 
 ### Simple implementation
 
 ```javascript
-const thunk = (store) => (next) => (action) => {
+const promise = (store) => (next) => (action) => {
     if (typeof action.then === 'function') {
         return action.then(next);
     }
     return next(action);
 };
-
-const store = createStore(reducers, [thunk]);
 ```
 
 
 ### Example
 
 ```javascript
-const store = createStore(reducers, [thunk]);
+const store = createStore(reducers, [promise]);
 
-// Action creators
-// TODO: Revisar Thunk e Middlewares
-// Paramos em https://egghead.io/lessons/javascript-redux-updating-the-state-with-the-fetched-data?series=building-react-applications-with-idiomatic-redux
+const receiveTodos = (filter, response) => ({
+    type: 'RECEIVE_TODOS',
+    filter,
+    response
+});
+
+const fetchTodos = (filter) => {
+    return api.fetchTodos(filter).then(response =>
+        receiveTodos(filter, response)
+    );
+};
+
+const fetchData = () => {
+    const { filter, fetchTodos, requestTodos } = this.props;
+    requestTodos(filter);
+};
+```
+
+## Redux Thunk (redux-thunk)
+
+### Simple implementation
+
+```javascript
+const thunk = (store) => (next) => (action) => {
+    if (typeof action === 'function') {
+        action(store.dispatch, store.getState);
+    } else {
+        next(action);
+    }
+}
+```
+
+### Example 1 - Before
+
+```javascript
+const receiveTodos = (filter, response) => ({
+    type: 'RECEIVE_TODOS',
+    filter,
+    response
+});
+
+const fetchTodos = (filter) => {
+    return api.fetchTodos(filter).then(response =>
+        receiveTodos(filter, response)
+    );
+}
+
+const requestTodos = (filter) => ({
+    type: 'REQUEST_TODOS',
+    filter
+});
+
+const fetchData = () => {
+    const { filter, fetchTodos, requestTodos } = this.props;
+    requestTodos(filter);
+    fetchTodos(filter);
+};
+```
+
+### Example 1 - After
+
+```javascript
+const receiveTodos = (filter, response) => ({
+    type: 'RECEIVE_TODOS',
+    filter,
+    response
+});
+
+const fetchTodos = (filter) => (dispatch, getState) => {
+    if (getIsFetching(getState(), filter)) {
+        return Promise.resolve();
+    }
+
+    dispatch(requestTodos(filter));
+
+    return api.fetchTodos(filter).then(response => {
+        dispatch(receiveTodos(filter, response));
+    });
+}
+
+const requestTodos = (filter) => ({
+    type: 'REQUEST_TODOS',
+    filter
+});
+
+const fetchData = () => {
+    const { filter, fetchTodos } = this.props;
+    fetchTodos(filter).then(() => console.log('done!'));
+};
+```
+
+### Example 2
+
+```javascript
+const errorMessage = (state = null, action) => {
+    if (filter !== action.filter) {
+        return state;
+    }
+
+    switch (action.type) {
+        case 'FETCH_TODOS_FAILURE':
+            return action.message;
+        case 'FETCH_TODOS_REQUEST':
+        case 'FETCH_TODOS_SUCCESS':
+            return null;
+        default:
+            return state;
+    }
+}
+
+const fetchTodos = (filter) => (dispatch, getState) => {
+    if (getIsFetching(getState(), filter)) {
+        return Promise.resolve();
+    }
+
+    dispatch({
+        type: 'FETCH_TODOS_REQUEST',
+        filter
+    });
+
+    return api.fetchTodos(filter).then(response => {
+        dispatch({
+            type: 'FETCH_TODOS_SUCCESS',
+            filter,
+            response
+        });
+    },
+    error => {
+        dispatch({
+            type: 'FETCH_TODOS_FAILURE',
+            filter,
+            message: error.message || 'Something went wrong'
+        });
+    });
+
+    // Do not use .catch() cause it can catch error from the dispatch too
+}
+```
+
+## Filters
+
+### Example
+
+```javascript
+const getIds = (state) => state.ids;
+const getIsFetching = (state) => state.isFetching;
+
+const getVisibleTodos = (state, filter) => {
+    const ids = getIds(state.listByFilter[filter]);
+    return ids.map(id => fromById.getTodo(state.todosById, id));
+};
+
+const getIsFetching = (state, filter) => {
+    return getIsFetching(state.listByFilter[filter]);
+}
 ```
 
 ## Avoiding array mutation
