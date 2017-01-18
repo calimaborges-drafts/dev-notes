@@ -249,7 +249,7 @@ document.addEventListener('mouseup', () => {
 
 ### Example 2 - Initial state
 
-***Obs*** *Dan Abramov does not recommend*
+***Obs:*** *Dan Abramov recommends against*
 
 ```javascript
 const persistedState = {
@@ -345,6 +345,8 @@ const fetchData = () => {
 ```
 
 ## Redux Thunk (redux-thunk)
+
+***Obs*** *Is thunk really necessary? Why wouldn't we just pass store as parameter to an action creator?*
 
 ### Simple implementation
 
