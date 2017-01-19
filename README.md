@@ -35,7 +35,7 @@ const todos = (state = [], action) => {
             ];
         case 'TOGGLE_TODO':
             return state.map(todo => {
-                if (state.id !== action.id) {
+                if (todo.id !== action.id) {
                     return todo;
                 }
 
@@ -62,7 +62,7 @@ const todo = (state, action) => {
                 completed: false
             };
         case 'TOGGLE_TODO':
-            if (todo.id !== action.id) {
+            if (state.id !== action.id) {
                 return state;
             }
 
