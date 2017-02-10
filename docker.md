@@ -4,10 +4,18 @@
 $ docker run -i -t ubuntu /bin/bash
 ```
 
-## Start mapping port
+## Mapping port
 
 ```bash
-$ docker run -p <host_port>:<guest_port> -i -t ubuntu /bin/bash
+$ docker run -p 8080:80 -i -t ubuntu /bin/bash
+```
+
+Ao acessar a porta 8080 a máquina redirecionará para a porta 80 do docker.
+
+## Mapping disk
+
+```bash
+docker run -v $PWD:/var/www -t -i web
 ```
 
 ## Commit modifications
