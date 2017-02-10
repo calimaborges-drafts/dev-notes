@@ -4,6 +4,12 @@
 $ docker run -i -t ubuntu /bin/bash
 ```
 
+## Start mapping port
+
+```bash
+$ docker run -p <host_port>:<guest_port> -i -t ubuntu /bin/bash
+```
+
 ## Commit modifications
 
 ```bash
