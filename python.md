@@ -2,11 +2,23 @@
 
 ## virtualenvwrapper
 
-### Installation
+### installation
 
 ```
 pip install virtualenvwrapper
 echo 'source /home/calimaborges/.local/bin/virtualenvwrapper.sh' > ~/.bashrc
+```
+
+### create virtual env
+
+```
+mkvirtualenv <name>
+```
+
+### work on virtual env
+
+```
+workon <name>
 ```
 
 ## pip
