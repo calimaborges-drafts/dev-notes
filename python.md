@@ -9,6 +9,12 @@ pip install virtualenvwrapper
 echo 'source /home/calimaborges/.local/bin/virtualenvwrapper.sh' > ~/.bashrc
 ```
 
+### list virtual envs
+
+```
+lsvirtualenv
+```
+
 ### create virtual env
 
 ```
