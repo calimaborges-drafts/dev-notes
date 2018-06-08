@@ -2,7 +2,9 @@
 
 ## Build behind proxy
 
+```bash
 docker build --build-arg HTTP_PROXY=http://proxy.server:3128/ HTTPS_PROXY=http://proxy.server:3128/
+```
 
 ## Start interactive shell for Ubuntu
 
