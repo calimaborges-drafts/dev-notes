@@ -6,6 +6,11 @@
 docker build -f app.dockerfile -t username/app --build-arg HTTP_PROXY=http://proxy.server:3128/ --build-arg HTTPS_PROXY=http://proxy.server:3128/ --build-arg npm_config_strict_ssl=false
 ```
 
+```bash
+docker-compose build --build-arg HTTP_PROXY=http://proxy.server:3128/ --build-arg HTTPS_PROXY=http://proxy.server:3128/
+```
+
+
 ## Start interactive shell for Ubuntu
 
 ```bash
